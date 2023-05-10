@@ -2,23 +2,38 @@ using Chess.Figures;
 
 namespace Chess.Console;
 
-public class BoardController
+public class ConsoleGameController
 {
-    private readonly Board _board;
+    private readonly GameController _game;
 
-    public BoardController(GameController board)
+    public ConsoleGameController(GameController game)
     {
-        _board = board;
+        _game = game;
     }
 
 
     public void Play()
     {
+        bool isFinished = false;
+        bool wasInvalidMove = false;
+        while (isFinished == false)
+        {
+            PrintBoard();
+            PrintStatus(wasInvalidMove, out isFinished);
+            Move? move = GetNextMove();
+            if (move is null)
+            {
+                wasInvalidMove = true;
+                continue;
+            }
+
+            wasInvalidMove = _game.TryMakeMove(move.Value) == false;
+        }
+
         
     }
     
-    
-    public Move? GetNextMove()
+    private Move? GetNextMove()
     {
         string? line = System.Console.ReadLine();
         if (line is null) return null;
@@ -33,13 +48,14 @@ public class BoardController
     private void PrintBoard()
     {
         System.Console.WriteLine("  ABCDEFGH");
-        foreach (int row in Enumerable.Range(0, 8))
+        foreach (int invertedRow in Enumerable.Range(0, 8))
         {
+            int row = 7 - invertedRow;
             System.Console.Write($"{row + 1} ");
             foreach (int column in Enumerable.Range(0, 8))
             {
                 Position position = new(row, column);
-                Figure? figure = _board.GetFigureAtOrDefault(position);
+                Figure? figure = _game.GetFigureAtOrDefault(position);
                 if (figure is null)
                 {
                     System.Console.Write(((row + column) % 2) switch
@@ -65,5 +81,21 @@ public class BoardController
             System.Console.WriteLine($" {row + 1}");
         }
         System.Console.WriteLine("  ABCDEFGH");
+    }
+
+
+    private void PrintStatus(bool invalidMove, out bool isFinished)
+    {
+        System.Console.WriteLine();
+        isFinished = true;
+        if(_game.IsMat()) {System.Console.WriteLine($"Mat, {_game.NextPlayer} won!");}
+        else if(_game.IsStaleMate()) System.Console.WriteLine($"Stale mate!");
+        else
+        {
+            isFinished = false;
+            if(_game.IsCheck()) System.Console.WriteLine($"Check!");
+            if(invalidMove) System.Console.WriteLine($"Invalid move!");
+            else System.Console.WriteLine($"Next player: {_game.Player}");
+        }
     }
 }

@@ -1,6 +1,7 @@
 namespace Chess;
 
-public class Color
+public enum Color
 {
-    
+    White,
+    Black
 }
